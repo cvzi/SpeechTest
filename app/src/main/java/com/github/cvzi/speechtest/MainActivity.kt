@@ -17,11 +17,12 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import java.util.*
 
-
+@SuppressLint("SetTextI18n")
 class MainActivity : AppCompatActivity() {
     private lateinit var speechRecognizer: SpeechRecognizer
     private lateinit var editText: EditText
     private lateinit var micButton: ImageView
+
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,45 +34,57 @@ class MainActivity : AppCompatActivity() {
         ) {
             checkPermission()
         }
-        editText = findViewById(R.id.text)
-        micButton = findViewById(R.id.button)
-        speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this)
+
         val speechRecognizerIntent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
         speechRecognizerIntent.putExtra(
             RecognizerIntent.EXTRA_LANGUAGE_MODEL,
             RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
         )
         speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
-        speechRecognizer.setRecognitionListener(object : RecognitionListener {
-            override fun onReadyForSpeech(bundle: Bundle) {}
-            override fun onBeginningOfSpeech() {
-                editText.setText("")
-                editText.hint = "Listening..."
-            }
 
-            override fun onRmsChanged(v: Float) {}
-            override fun onBufferReceived(bytes: ByteArray) {}
-            override fun onEndOfSpeech() {}
-            override fun onError(i: Int) {}
-            override fun onResults(bundle: Bundle) {
-                micButton.setImageResource(R.drawable.ic_mic_black_off)
-                val data = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                editText.setText(data!![0])
-            }
+        editText = findViewById(R.id.text)
+        micButton = findViewById(R.id.button)
 
-            override fun onPartialResults(bundle: Bundle) {}
-            override fun onEvent(i: Int, bundle: Bundle) {}
-        })
-        micButton.setOnTouchListener{ view, motionEvent ->
+        micButton.setOnTouchListener { _, motionEvent ->
             if (motionEvent.action == MotionEvent.ACTION_UP) {
                 speechRecognizer.stopListening()
             }
             if (motionEvent.action == MotionEvent.ACTION_DOWN) {
                 micButton.setImageResource(R.drawable.ic_mic_black_24dp)
                 speechRecognizer.startListening(speechRecognizerIntent)
+                editText.setText("")
+                editText.hint = "Listening..."
             }
             false
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this)
+        speechRecognizer.setRecognitionListener(object : RecognitionListener {
+            override fun onReadyForSpeech(bundle: Bundle) {}
+            override fun onBeginningOfSpeech() {}
+            override fun onRmsChanged(v: Float) {}
+            override fun onBufferReceived(bytes: ByteArray) {}
+            override fun onEndOfSpeech() {}
+            override fun onError(i: Int) {
+                micButton.setImageResource(R.drawable.ic_mic_black_off)
+                editText.setText("Error $i ${enumValues<SpeechError>().getOrNull(i) ?: ""}")
+                editText.hint = "Tap mic button to Speak"
+            }
+
+            override fun onResults(bundle: Bundle) {
+                micButton.setImageResource(R.drawable.ic_mic_black_off)
+                val data = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                editText.setText(data!![0])
+                editText.hint = "Tap mic button to Speak"
+            }
+
+            override fun onPartialResults(bundle: Bundle) {}
+            override fun onEvent(i: Int, bundle: Bundle) {}
+        })
     }
 
     override fun onDestroy() {
@@ -93,7 +106,7 @@ class MainActivity : AppCompatActivity() {
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == RecordAudioRequestCode && grantResults.size > 0) {
+        if (requestCode == RecordAudioRequestCode && grantResults.isNotEmpty()) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) Toast.makeText(
                 this,
                 "Permission Granted",
@@ -104,5 +117,23 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         const val RecordAudioRequestCode = 1
+
+        enum class SpeechError {
+            ERROR_UNKNOWN,
+            ERROR_NETWORK_TIMEOUT,
+            ERROR_NETWORK,
+            ERROR_AUDIO,
+            ERROR_SERVER,
+            ERROR_CLIENT,
+            ERROR_SPEECH_TIMEOUT,
+            ERROR_NO_MATCH,
+            ERROR_RECOGNIZER_BUSY,
+            ERROR_INSUFFICIENT_PERMISSIONS,
+            ERROR_TOO_MANY_REQUESTS,
+            ERROR_SERVER_DISCONNECTED,
+            ERROR_LANGUAGE_NOT_SUPPORTED,
+            ERROR_LANGUAGE_UNAVAILABLE,
+            ERROR_CANNOT_CHECK_SUPPORT,
+        }
     }
 }
