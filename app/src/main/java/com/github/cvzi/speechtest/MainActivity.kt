@@ -73,14 +73,22 @@ class MainActivity : AppCompatActivity() {
             override fun onError(i: Int) {
                 micButton.setColorFilter(getColor(R.color.teal_200))
                 editText.setText("Error $i ${enumValues<SpeechError>().getOrNull(i) ?: ""}")
-                editText.hint = "Tap mic button to Speak"
+                editText.hint = "Tap mic button to speak"
             }
 
             override fun onResults(bundle: Bundle) {
                 micButton.setColorFilter(getColor(R.color.teal_200))
                 val data = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                editText.setText(data!![0])
-                editText.hint = "Tap mic button to Speak"
+                if (data?.get(0) == null) {
+                    Toast.makeText(
+                        this@MainActivity,
+                        "No speech results",
+                        Toast.LENGTH_LONG
+                    ).show()
+                } else {
+                    editText.setText(data[0])
+                }
+                editText.hint = "Tap mic button to speak"
             }
 
             override fun onPartialResults(bundle: Bundle) {}
