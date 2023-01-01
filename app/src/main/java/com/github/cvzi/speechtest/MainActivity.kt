@@ -4,6 +4,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.os.Bundle
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
@@ -50,7 +51,7 @@ class MainActivity : AppCompatActivity() {
                 speechRecognizer.stopListening()
             }
             if (motionEvent.action == MotionEvent.ACTION_DOWN) {
-                micButton.setImageResource(R.drawable.ic_mic_black_24dp)
+                micButton.setColorFilter(Color.RED)
                 speechRecognizer.startListening(speechRecognizerIntent)
                 editText.setText("")
                 editText.hint = "Listening..."
@@ -70,13 +71,13 @@ class MainActivity : AppCompatActivity() {
             override fun onBufferReceived(bytes: ByteArray) {}
             override fun onEndOfSpeech() {}
             override fun onError(i: Int) {
-                micButton.setImageResource(R.drawable.ic_mic_black_off)
+                micButton.setColorFilter(getColor(R.color.teal_200))
                 editText.setText("Error $i ${enumValues<SpeechError>().getOrNull(i) ?: ""}")
                 editText.hint = "Tap mic button to Speak"
             }
 
             override fun onResults(bundle: Bundle) {
-                micButton.setImageResource(R.drawable.ic_mic_black_off)
+                micButton.setColorFilter(getColor(R.color.teal_200))
                 val data = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                 editText.setText(data!![0])
                 editText.hint = "Tap mic button to Speak"
